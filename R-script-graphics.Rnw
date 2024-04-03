@@ -1,0 +1,103 @@
+\documentclass{article}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+<<>>=
+library(dplyr)
+library(ggplot2)
+library(RColorBrewer)
+library(reshape2)
+library(stringr)
+@
+
+<<>>=
+#variables to change
+# working directory
+wd <- "~/Expression_data/" #your working directory
+g <- "SmLINC101519-IBu" #gene that you want
+@
+
+
+<<>>=
+# set work directory were files are
+setwd(wd)
+dir("./", "Table-exp") -> files
+
+# selecting expression table
+res <- NULL
+
+for (i in files){
+  read.delim(i) -> tmp
+  tmp$type <- gsub("Table-expr-|.txt", "", i)
+  rbind (res, tmp[tmp$gene_ID %in% g,]) -> res
+}
+
+melt(res) -> res
+sapply(str_split(res$variable, "_"), function (x) tail (x, 1)) -> res$group
+res$group <- factor(res$group, levels = c("Miracidia", 
+                                          "Sporocysts",
+                                          "Cercariae", 
+                                          "Somula", "Males",
+                                          "Females"))
+
+as.data.frame(unique(res$group)) -> info
+colnames(info) <- "group"
+info$name <- c("M/S", "M/S", "C", "So", "M", "F")
+factor(info$name, levels = c("M/S", "C", "So", "M", "F")) -> info$name
+merge(res, info, by="group") -> res
+@
+
+<<>>=
+res2 <- res %>% 
+  group_by(name, type) %>%
+  summarise(median = median (value))
+merge(res, res2, by=c("name", "type")) -> res
+@
+
+<<>>=
+#Plot image 
+ggplot(res, aes (x = name, y = value, color = group)) + 
+  geom_point() + 
+  scale_color_manual(values = brewer.pal(6,"Dark2")) + 
+  geom_line(data = res, 
+            aes (x = name, y = median, group = type), 
+            color = "red", linewidth = 1.2) +
+  facet_wrap(~ type, scales = "free_y") + 
+  ylab("Expression") +
+  ggtitle(g) +
+  theme(legend.position = "bottom", 
+        legend.title = element_blank(), 
+        axis.title.x = element_blank(), 
+        plot.title = element_text(face=2, hjust = 0.5), 
+        axis.title = element_text(face=2), 
+        strip.text = element_text(face=2)
+        ) + 
+  guides(colour = guide_legend(nrow = 1)) 
+@
+
+<<>>=
+#Plot image second version
+res2 <- res[res$type %in% "TMM.CPM", ]
+ggplot(res2, aes (x = name, y = value)) + 
+  geom_point() + 
+  geom_line(data = res2, 
+            aes (x = name, y = median, group = type), 
+            color = "blue", linewidth = 1.2) +
+  ylab("Normalized RNA-seq Signal (TMM)") +
+  theme_minimal () + 
+  ggtitle(g) +
+  theme(#legend.position = "bottom", 
+        #legend.title = element_blank(), 
+        axis.title.x = element_blank(), 
+        plot.title = element_text(face=2, hjust = 0.5, 
+                                  size = 15), 
+        panel.border =  element_rect(colour = "black", 
+                                     fill = NA),
+        axis.title = element_text(face=2, size = 15), 
+        axis.text = element_text(size = 15)
+  ) 
+@
+
+
+\end{document}
