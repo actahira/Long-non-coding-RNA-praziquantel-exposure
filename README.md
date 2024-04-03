@@ -1,8 +1,8 @@
-## Expression data along life-cycle of *Schistosoma mansoni*
+## Expression data throughout *Schistosoma mansoni* life-cycle
 
 The data used here is avalaible at [Silveira *et al.*, 2021](https://www.nature.com/articles/s41598-021-96055-7).
 
-The folder Expression_data are all 4 tables with expression data along life-cycle of the parasite. 
+The folder Expression_data are all 4 tables with expression data throughout the parasite life-cycle. 
 
 The script to plot the graphics is available in R-scripts-graphics.Rnw. It was built under R-4.1 version.
 
